@@ -1,2 +1,4 @@
 # gravity-sim
-Simple Newtonian gravity simulation, animated with matplotlib. My first OO project.
+Simple 2D Newtonian gravity simulation, animated with matplotlib. My first OO project.
+
+Run to see results.
