@@ -12,17 +12,17 @@ import keyboard as kb
 
 #%%
 
-G = 1
+G = 10
 
 class Simulation:
     def __init__(self, dt):
         self.time = 0.
         self.dt = dt
         self.fig, self.ax = plt.subplots()
-        self.ax.set_xlim(-50, 50)
-        self.ax.set_ylim(-50, 50)
+        self.ax.set_xlim(-100, 100)
+        self.ax.set_ylim(-100, 100)
         self.ax.set_aspect('equal')
-        self.ax.grid()
+        self.ax.grid(True)
         self.ax.set_xlabel('x', fontsize=20)
         self.ax.set_ylabel('y', fontsize=20)
         plt.get_current_fig_manager().full_screen_toggle()
@@ -47,12 +47,14 @@ class Particle:
         self.mass = mass
         self.position = position
         self.velocity = velocity
-        self.sctr = sim.ax.scatter(self.position[0], self.position[1], s=100)
+        self.sctr = sim.ax.scatter(self.position[0], self.position[1], s=50)
         
     def compute_acceleration(self, particle_list):
         # Drop concerned particle from list to iterate over
         other_particles = particle_list[:self._id] + particle_list[self._id+1:]
-        accel_contributions = np.array([(-G * o.mass * (self.position - o.position) / np.linalg.norm(self.position - o.position + self.mass**(1/3))**3) for o in other_particles])
+        softening_length = self.mass**(1/3)
+        accel_contributions = np.array([(-G * o.mass * (self.position - o.position) / ((np.linalg.norm(self.position - o.position)**2
+                                           + softening_length**2) * np.linalg.norm(self.position - o.position))) for o in other_particles])
         acceleration = np.sum(accel_contributions, axis=0)
         return acceleration
         
@@ -63,25 +65,41 @@ class Particle:
         sim.time += sim.dt
         particle_list[self._id] = self
                         
-#%% INITIALISE OBJECTS
+#%% INITIALISE SIM
 
-# Make figure
 sim = Simulation(dt=0.03)
 
-#%%
+#%% SET UP PARTICLES INDIVIDUALLY
+
+# # Potential source
+# p0 = Particle(0, 10000., np.array([0., 0.]), np.array([0., 0.]))
+# # Test mass
+# p1 = Particle(1, 2., np.array([10., 10.]), np.array([-15., 15.]))
+# # Another one
+# p2 = Particle(2, 1., np.array([-10., -10.]), np.array([12., -12.]))
+# # Another one
+# p3 = Particle(3, 1., np.array([-20., 20.]), np.array([5., -10.]))
+# # # Another one
+# # p4 = Particle(4, 1., np.array([10., -10.]), np.array([0., 0.]))
+# # Collect
+# particle_list = [p0, p1,  p2,  p3]
+
+#%% RANDOM PARTICLE DISTRIBUTION
+
+# No. of particles
+N = 10
+# Draw initial conditions from a distribution
+np.random.seed(5678)
+positions = np.random.normal(loc=0, scale=20, size=(N,2))
+velocities = np.random.normal(loc=0, scale=7, size=(N,2))
+
+# Test masses
+particle_list = np.empty(shape=N).tolist()
+for i in range(0,N-1):
+    particle_list[i] = Particle(i, 10, positions[i], velocities[i])
 
 # Potential source
-p0 = Particle(0, 10000., np.array([0., 0.]), np.array([0., 0.]))
-# Test mass
-p1 = Particle(1, 1., np.array([10., 10.]), np.array([-15., 15.]))
-# Another one
-p2 = Particle(2, 1., np.array([-10., -10.]), np.array([12., -12.]))
-# Another one
-p3 = Particle(3, 1., np.array([-20., 20.]), np.array([5., -10.]))
-# # Another one
-# p4 = Particle(4, 1., np.array([10., -10.]), np.array([0., 0.]))
-# Collect
-particle_list = [p0, p1,  p2,  p3]
+particle_list[N-1] = Particle(N-1, 1000., np.array([0., 0.]), np.array([0., 0.]))
 
 #%% ANIMATE
 
