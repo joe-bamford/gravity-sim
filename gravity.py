@@ -52,6 +52,7 @@ class Particle:
     def compute_acceleration(self, particle_list):
         # Drop concerned particle from list to iterate over
         other_particles = particle_list[:self._id] + particle_list[self._id+1:]
+        # A somewhat arbitrary parameter to soften the potential. Reduces extreme scattering effects on close approach of particles
         softening_length = self.mass**(1/3)
         accel_contributions = np.array([(-G * o.mass * (self.position - o.position) / ((np.linalg.norm(self.position - o.position)**2
                                            + softening_length**2) * np.linalg.norm(self.position - o.position))) for o in other_particles])
